@@ -1,5 +1,6 @@
 import styled, { createGlobalStyle } from "styled-components";
 import HelmetComponent from "./helmet";
+import { motion } from "framer-motion";
 
 const GlobalCss = createGlobalStyle`
 body{
@@ -25,7 +26,7 @@ const Wrapper = styled.div`
   align-items: center;
 `;
 
-const Box = styled.div`
+const Box = styled(motion.div)`
   width: 200px;
   height: 200px;
   background-color: white;
@@ -39,7 +40,11 @@ function App() {
       <HelmetComponent />
       <GlobalCss />
       <Wrapper>
-        <Box />
+        <Box
+          initial={{ scale: 0 }}
+          animate={{ scale: 1, rotateZ: 360 }}
+          transition={{ duration: 0.5, type: "spring", delay: 1 }}
+        />
       </Wrapper>
     </>
   );
