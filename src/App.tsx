@@ -1,12 +1,16 @@
 import styled, { createGlobalStyle } from "styled-components";
 import HelmetComponent from "./helmet";
-import { motion } from "framer-motion";
-import { useRef } from "react";
+import {
+  motion,
+  motionValue,
+  useMotionValueEvent,
+  useScroll,
+  useTransform,
+} from "framer-motion";
 
 const GlobalCss = createGlobalStyle`
 body{
   font-family: "Nunito", sans-serif;
-  background:linear-gradient(135deg,#e09,#d0e);
   line-height: 1.2;
   color:black
 }
@@ -19,8 +23,8 @@ color:inherit;
 }
 `;
 
-const Wrapper = styled.div`
-  height: 100vh;
+const Wrapper = styled(motion.div)`
+  height: 200vh;
   width: 100vw;
   display: flex;
   justify-content: center;
@@ -47,27 +51,37 @@ const Box = styled(motion.div)`
 `;
 
 const boxVars = {
-  hover: { scale: 1.0, rotateZ: 90 },
-  click: { scale: 1.0, borderRadius: "100px" },
+  // hover: { scale: 1.0, rotateZ: 90 },
+  // click: { scale: 1.0, rotateZ: 180, borderRadius: "100px" },
 };
 
 function App() {
-  const bigBoxRef = useRef<HTMLDivElement>(null);
+  const x = motionValue(0);
+  const rotateValue = useTransform(x, [-800, 800], [-360, 360]);
+  const bgValue = useTransform(
+    x,
+    [-800, 0, 800],
+    [
+      "linear-gradient(-135deg, rgb(111, 0, 238), rgb(0, 210, 238))",
+      "linear-gradient(0deg, rgb(238, 0, 153), rgb(221, 0, 238))",
+      "linear-gradient(135deg, rgb(0, 238, 186), rgb(238, 234, 0))",
+    ]
+  );
+  const { scrollYProgress } = useScroll();
+  const scrollValue = useTransform(scrollYProgress, [0, 1], [1, 5]);
   return (
     <>
       <HelmetComponent />
       <GlobalCss />
-      <Wrapper>
-        <BigBox ref={bigBoxRef}>
-          <Box
-            drag
-            dragSnapToOrigin
-            dragConstraints={bigBoxRef}
-            variants={boxVars}
-            whileHover="hover"
-            whileTap="click"
-          />
-        </BigBox>
+      <Wrapper style={{ background: bgValue }}>
+        <Box
+          style={{ x, rotateZ: rotateValue, scale: scrollValue }}
+          drag="x"
+          dragSnapToOrigin
+          variants={boxVars}
+          whileHover="hover"
+          whileTap="click"
+        />
       </Wrapper>
     </>
   );
