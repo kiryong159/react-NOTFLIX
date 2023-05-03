@@ -1,12 +1,14 @@
 import styled, { createGlobalStyle } from "styled-components";
 import HelmetComponent from "./helmet";
 import {
+  AnimatePresence,
   motion,
   motionValue,
   useMotionValueEvent,
   useScroll,
   useTransform,
 } from "framer-motion";
+import { useState } from "react";
 
 const GlobalCss = createGlobalStyle`
 body{
@@ -24,7 +26,7 @@ color:inherit;
 `;
 
 const Wrapper = styled(motion.div)`
-  height: 200vh;
+  height: 100vh;
   width: 100vw;
   display: flex;
   justify-content: center;
@@ -47,6 +49,9 @@ const Box = styled(motion.div)`
   height: 200px;
   background-color: #81a8c28d;
   border-radius: 25px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   box-shadow: 0 2px 3px rgba(0, 0, 0, 0.1), 0 10px 20px rgba(0, 0, 0, 0.06);
 `;
 
@@ -55,33 +60,33 @@ const boxVars = {
   // click: { scale: 1.0, rotateZ: 180, borderRadius: "100px" },
 };
 
+const boxVar = {
+  initial: { opacity: 0, scale: 0 },
+  visible: { opacity: 1, scale: 1, rotateZ: 360 },
+  leaving: { opacity: 0, scale: 0, y: 20 },
+};
+
 function App() {
-  const x = motionValue(0);
-  const rotateValue = useTransform(x, [-800, 800], [-360, 360]);
-  const bgValue = useTransform(
-    x,
-    [-800, 0, 800],
-    [
-      "linear-gradient(-135deg, rgb(111, 0, 238), rgb(0, 210, 238))",
-      "linear-gradient(0deg, rgb(238, 0, 153), rgb(221, 0, 238))",
-      "linear-gradient(135deg, rgb(0, 238, 186), rgb(238, 234, 0))",
-    ]
-  );
-  const { scrollYProgress } = useScroll();
-  const scrollValue = useTransform(scrollYProgress, [0, 1], [1, 5]);
+  const [showing, setShowing] = useState(false);
+  const onClick = () => {
+    setShowing((prev) => !prev);
+  };
   return (
     <>
       <HelmetComponent />
       <GlobalCss />
-      <Wrapper style={{ background: bgValue }}>
-        <Box
-          style={{ x, rotateZ: rotateValue, scale: scrollValue }}
-          drag="x"
-          dragSnapToOrigin
-          variants={boxVars}
-          whileHover="hover"
-          whileTap="click"
-        />
+      <Wrapper>
+        <button onClick={onClick}>ddd</button>
+        <AnimatePresence>
+          {showing ? (
+            <Box
+              variants={boxVar}
+              initial="initial"
+              animate="visible"
+              exit="leaving"
+            />
+          ) : null}
+        </AnimatePresence>
       </Wrapper>
     </>
   );
