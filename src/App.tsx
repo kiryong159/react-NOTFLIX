@@ -31,6 +31,7 @@ const Wrapper = styled(motion.div)`
   display: flex;
   justify-content: center;
   align-items: center;
+  background-color: aliceblue;
 `;
 
 const BigBox = styled.div`
@@ -39,52 +40,64 @@ const BigBox = styled.div`
   background-color: #bdc3c78d;
   border-radius: 25px;
   display: flex;
+
   justify-content: center;
   align-items: center;
   overflow: hidden;
 `;
 
+const Grid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  width: 50vw;
+  gap: 10px;
+  div:first-child,
+  div:last-child {
+    grid-column: span 2;
+  }
+`;
+
 const Box = styled(motion.div)`
-  width: 200px;
   height: 200px;
-  background-color: #81a8c28d;
+  background-color: #9acae7;
   border-radius: 25px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
   box-shadow: 0 2px 3px rgba(0, 0, 0, 0.1), 0 10px 20px rgba(0, 0, 0, 0.06);
 `;
 
-const boxVars = {
-  // hover: { scale: 1.0, rotateZ: 90 },
-  // click: { scale: 1.0, rotateZ: 180, borderRadius: "100px" },
-};
-
-const boxVar = {
-  initial: { opacity: 0, scale: 0 },
-  visible: { opacity: 1, scale: 1, rotateZ: 360 },
-  leaving: { opacity: 0, scale: 0, y: 20 },
-};
+const Overlay = styled(motion.div)`
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+`;
 
 function App() {
-  const [showing, setShowing] = useState(false);
-  const onClick = () => {
-    setShowing((prev) => !prev);
+  const [clicked, setClicked] = useState(false);
+  const toggle = () => {
+    setClicked((prev) => !prev);
   };
   return (
     <>
       <HelmetComponent />
       <GlobalCss />
-      <Wrapper>
-        <button onClick={onClick}>ddd</button>
+      <Wrapper onClick={toggle}>
+        <Grid>
+          <Box layoutId="hello" />
+          <Box />
+          <Box />
+          <Box />
+        </Grid>
         <AnimatePresence>
-          {showing ? (
-            <Box
-              variants={boxVar}
-              initial="initial"
-              animate="visible"
-              exit="leaving"
-            />
+          {clicked ? (
+            <Overlay
+              initial={{ backgroundColor: "rgba(0, 0, 0, 0.0)" }}
+              animate={{ backgroundColor: "rgba(0, 0, 0, 0.7)" }}
+              exit={{ backgroundColor: "rgba(0, 0, 0, 0.0)" }}
+            >
+              <Box layoutId="hello" style={{ width: 400, height: 200 }} />
+            </Overlay>
           ) : null}
         </AnimatePresence>
       </Wrapper>
