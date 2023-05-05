@@ -1,12 +1,9 @@
 import styled from "styled-components";
 
-const A = styled.div`
-  background-color: #ffffff;
-  height: 100vh;
-`;
+const A = styled.div``;
 
 function Home() {
-  return <A>home</A>;
+  return <A></A>;
 }
 
 export default Home;

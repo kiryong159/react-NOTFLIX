@@ -10,7 +10,9 @@ const GlobalCss = createGlobalStyle`
 body{
   font-family: "Nunito", sans-serif;
   line-height: 1.2;
-  color:black
+  color:black;
+  height:150vh;
+  background-color:aliceblue;
 }
 a {
   text-decoration-line: none;
