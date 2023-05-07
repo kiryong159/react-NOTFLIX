@@ -4,6 +4,7 @@ import { useState } from "react";
 import styled from "styled-components";
 import { getMovies, IGetMoviesResult } from "../api";
 import { makeImagePath } from "../utils";
+import useWindowDimensions from "../windowDimension";
 
 const Wrapper = styled.div`
   background: black;
@@ -58,21 +59,46 @@ const Box = styled(motion.div)<{ bgPhoto: string }>`
   background-size: cover;
   background-position: center center;
   height: 200px;
+  &:first-child {
+    transform-origin: center left;
+  }
+  &:nth-child(6) {
+    transform-origin: center right;
+  }
 `;
 
-const rowVars = {
-  hidden: {
-    x: window.innerWidth + 3,
+const offset = 6;
+
+const boxVars = {
+  normal: {
+    scale: 1,
   },
-  visible: {
-    x: 0,
-  },
-  exit: {
-    x: -window.innerWidth - 3,
+  hover: {
+    scale: 1.3,
+    y: -50,
+    transition: { delay: 0.5, duration: 0.3, type: "tween" },
   },
 };
 
-const offset = 6;
+const BoxInfo = styled(motion.div)`
+  padding: 10px;
+  background-color: ${(props) => props.theme.black.lighter};
+  opacity: 0;
+  position: absolute;
+  width: 100%;
+  bottom: -40px;
+  h4 {
+    text-align: center;
+    font-size: 18px;
+  }
+`;
+
+const infoVars = {
+  hover: {
+    opacity: 1,
+    transition: { delay: 0.5, duration: 0.3, type: "tween" },
+  },
+};
 
 function Home() {
   const { data, isLoading } = useQuery<IGetMoviesResult>(
@@ -94,7 +120,7 @@ function Home() {
   const toggleLeaving = () => {
     setLeaving((PREV) => !PREV);
   };
-
+  const width = useWindowDimensions();
   return (
     <Wrapper>
       {isLoading ? (
@@ -110,10 +136,9 @@ function Home() {
           <Slider>
             <AnimatePresence initial={false} onExitComplete={toggleLeaving}>
               <Row
-                variants={rowVars}
-                initial="hidden"
-                animate="visible"
-                exit="exit"
+                initial={{ x: width + 10 }}
+                animate={{ x: 0 }}
+                exit={{ x: -width - 10 }}
                 transition={{ type: "tween", duration: 1 }}
                 key={index}
               >
@@ -123,8 +148,16 @@ function Home() {
                   .map((movie) => (
                     <Box
                       key={movie.id}
+                      variants={boxVars}
+                      initial="normal"
+                      whileHover="hover"
+                      transition={{ type: "tween" }}
                       bgPhoto={makeImagePath(movie.backdrop_path, "w500")}
-                    />
+                    >
+                      <BoxInfo variants={infoVars}>
+                        <h4>{movie.title}</h4>
+                      </BoxInfo>
+                    </Box>
                   ))}
               </Row>
             </AnimatePresence>
