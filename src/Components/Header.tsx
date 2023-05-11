@@ -5,7 +5,8 @@ import {
   useScroll,
 } from "framer-motion";
 import { useState } from "react";
-import { Link, useRouteMatch } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { Link, useHistory, useRouteMatch } from "react-router-dom";
 import styled from "styled-components";
 
 const Nav = styled(motion.nav)`
@@ -51,7 +52,7 @@ const Item = styled.li`
   flex-direction: column;
 `;
 
-const SearchIcon = styled(motion.span)`
+const SearchIcon = styled(motion.form)`
   color: white;
   display: flex;
   align-items: center;
@@ -104,12 +105,17 @@ const navVars = {
   },
 };
 
+interface IForm {
+  keyword: string;
+}
+
 function Header() {
   const [searchOpen, setSearchOpen] = useState(false);
   const homeMatch = useRouteMatch("/");
   const tvMatch = useRouteMatch("/tv");
   const navAnimation = useAnimation();
   const { scrollY } = useScroll();
+  const history = useHistory();
   const toggleSearch = () => {
     setSearchOpen((prev) => !prev);
   };
@@ -122,6 +128,10 @@ function Header() {
     }
   });
 
+  const { register, handleSubmit } = useForm<IForm>();
+  const onValid = (data: IForm) => {
+    history.push(`/search?keyword=${data.keyword}`);
+  };
   return (
     <Nav
       variants={navVars}
@@ -155,7 +165,7 @@ function Header() {
         </Items>
       </Col>
       <Col>
-        <SearchIcon>
+        <SearchIcon onSubmit={handleSubmit(onValid)}>
           <motion.svg
             onClick={toggleSearch}
             animate={{ x: searchOpen ? -205 : 0 }}
@@ -167,6 +177,7 @@ function Header() {
             <path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352a144 144 0 1 0 0-288 144 144 0 1 0 0 288z" />
           </motion.svg>
           <Input
+            {...register("keyword", { required: true, minLength: 2 })}
             animate={{ scaleX: searchOpen ? 1 : 0 }}
             initial={{ scaleX: 0 }}
             transition={{ type: "linear" }}

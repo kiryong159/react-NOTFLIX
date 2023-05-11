@@ -6,6 +6,7 @@ import { darkTheme } from "./theme";
 import { createGlobalStyle } from "styled-components";
 import HelmetComponent from "./helmet";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
 const GlobalCss = createGlobalStyle`
 html,
@@ -137,7 +138,7 @@ body{
   font-family: "Nunito", sans-serif;
   line-height: 1.2;
   color:${(props) => props.theme.white.darker};
-  height:200vh;
+  height:100vh;
   background-color:aliceblue;
 }
 a {
@@ -163,6 +164,7 @@ root.render(
         <GlobalCss />
         <App />
       </ThemeProvider>
+      <ReactQueryDevtools initialIsOpen={true} />
     </QueryClientProvider>
   </RecoilRoot>
 );

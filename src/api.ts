@@ -25,3 +25,13 @@ export function getMovies() {
     (response) => response.json()
   );
 }
+
+export interface IGetPopularMovies {
+  results: IMovie[];
+}
+
+export function getpopularMovies() {
+  return fetch(
+    `${BASE_PATH}/movie/popular?api_key=${API_KEY}&language=en-US&page=1`
+  ).then((response) => response.json());
+}
