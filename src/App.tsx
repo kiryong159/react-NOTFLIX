@@ -13,10 +13,10 @@ function App() {
           <Route path="/tv">
             <Tv />
           </Route>
-          <Route path="/search">
+          <Route path={["/search", `/search?keyword=:keyword`]}>
             <Search />
           </Route>
-          <Route path={["/", `/movie/:movieId`]}>
+          <Route path={["/", `/movies/:movieId`]}>
             <Home />
           </Route>
         </Switch>

@@ -1,3 +1,4 @@
+import { useQuery } from "@tanstack/react-query";
 import {
   motion,
   useAnimation,
@@ -8,6 +9,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link, useHistory, useRouteMatch } from "react-router-dom";
 import styled from "styled-components";
+import { getSearch, IGetSearch } from "../api";
 
 const Nav = styled(motion.nav)`
   display: flex;
@@ -98,7 +100,7 @@ const Circle = styled(motion.span)`
 
 const navVars = {
   top: {
-    backgroundColor: "rgba(0,0,0,0.3)",
+    backgroundColor: "rgba(0,0,0,0.5)",
   },
   scroll: {
     backgroundColor: "rgba(0,0,0,1)",
@@ -121,7 +123,7 @@ function Header() {
   };
 
   useMotionValueEvent(scrollY, "change", () => {
-    if (scrollY.get() > 80) {
+    if (scrollY.get() > 20) {
       navAnimation.start("scroll");
     } else {
       navAnimation.start("top");
@@ -132,6 +134,7 @@ function Header() {
   const onValid = (data: IForm) => {
     history.push(`/search?keyword=${data.keyword}`);
   };
+
   return (
     <Nav
       variants={navVars}

@@ -8,8 +8,10 @@ import styled from "styled-components";
 import {
   getMovies,
   getpopularMovies,
+  getTopMovies,
   IGetMoviesResult,
   IGetPopularMovies,
+  IGetTopMovies,
 } from "../api";
 import { makeImagePath } from "../utils";
 import useWindowDimensions from "../windowDimension";
@@ -17,7 +19,11 @@ import useWindowDimensions from "../windowDimension";
 const Wrapper = styled.div`
   background: black;
   overflow-x: hidden;
-  padding-bottom: 200px;
+  ::-webkit-scrollbar {
+    display: none; /*크롬 엣지 */
+  }
+  -ms-overflow-style: none; /* 인터넷 익스플로러 */
+  scrollbar-width: none; /* 파이어폭스 */
 `;
 
 const Loader = styled.div`
@@ -28,7 +34,7 @@ const Loader = styled.div`
 `;
 
 const Banner = styled.div<{ bgphoto: string }>`
-  height: 100vh;
+  height: 91vh;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -36,6 +42,13 @@ const Banner = styled.div<{ bgphoto: string }>`
   background-image: linear-gradient(rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.8)),
     url(${(props) => props.bgphoto});
   background-size: cover;
+
+  ::-webkit-scrollbar {
+    display: none; /*크롬 엣지 */
+  }
+  -ms-overflow-style: none; /* 인터넷 익스플로러 */
+  scrollbar-width: none; /* 파이어폭스 */
+  overflow-y: hidden;
 `;
 
 const Title = styled.h2`
@@ -56,6 +69,11 @@ const Slider = styled.div`
 const PopularSlider = styled.div`
   position: relative;
   top: +200px;
+`;
+
+const TopSlider = styled.div`
+  position: relative;
+  top: +500px;
 `;
 
 const Row = styled(motion.div)`
@@ -127,8 +145,14 @@ const BigMovieInfo = styled(motion.div)<{ ypoint: number }>`
   margin: 0 auto;
   background-color: ${(props) => props.theme.black.lighter};
   border-radius: 15px;
-  overflow: hidden;
+  overflow-y: scroll;
   z-index: 5;
+
+  ::-webkit-scrollbar {
+    display: none; /*크롬 엣지 */
+  }
+  -ms-overflow-style: none; /* 인터넷 익스플로러 */
+  scrollbar-width: none; /* 파이어폭스 */
 `;
 
 const Overlay = styled(motion.div)`
@@ -150,10 +174,11 @@ const BigCover = styled.div`
 
 const BigTitle = styled.h3`
   color: ${(props) => props.theme.white.lighter};
-  font-size: 38px;
+  font-size: 50px;
+  font-weight: bold;
   position: relative;
   padding: 10px;
-  top: -70px;
+  top: -100px;
 `;
 
 const BigOVerview = styled.p`
@@ -180,6 +205,7 @@ const IndexNextButton = styled.button`
   border: none;
   font-size: 30px;
   z-index: 3;
+  cursor: pointer;
 `;
 const IndexPrevButton = styled.button`
   position: absolute;
@@ -190,6 +216,20 @@ const IndexPrevButton = styled.button`
   border: none;
   font-size: 30px;
   z-index: 3;
+  cursor: pointer;
+`;
+
+const MoreInfo = styled.div`
+  display: flex;
+  position: relative;
+  top: -40px;
+  flex-direction: column;
+  margin-left: 15px;
+  span {
+    font-size: 20px;
+    font-weight: bold;
+    padding: 10px;
+  }
 `;
 
 function Home() {
@@ -197,6 +237,9 @@ function Home() {
   const bigMovieMatch = useRouteMatch<{ movieId: string }>("/movies/:movieId");
   const bigPopMovieMatch = useRouteMatch<{ popmovieId: string }>(
     `/popularmovies/:popmovieId`
+  );
+  const bigTopMovieMatch = useRouteMatch<{ topMovieId: string }>(
+    "/topmovies/:topMovieId"
   );
   const { scrollY } = useScroll();
   const { data, isLoading } = useQuery<IGetMoviesResult>(
@@ -207,8 +250,15 @@ function Home() {
     ["movies", "popular"],
     getpopularMovies
   );
+
+  const { data: topData } = useQuery<IGetTopMovies>(
+    ["movies", "topRated"],
+    getTopMovies
+  );
+
   const [index, setIndex] = useState(0);
   const [popularIndex, setPopularIndex] = useState(0);
+  const [topIndex, setTopIndex] = useState(0);
   const [leaving, setLeaving] = useState(false);
   const [indexBack, setIndexBack] = useState(false);
 
@@ -254,6 +304,27 @@ function Home() {
     }
   };
 
+  const increaseTopIndex = () => {
+    if (topData) {
+      if (leaving) return;
+      toggleLeaving();
+      setIndexBack(false);
+      const totalMovies = topData.results.length;
+      const maxIndex = Math.ceil(totalMovies / offset) - 1;
+      setTopIndex((prev) => (prev === maxIndex ? 0 : prev + 1));
+    }
+  };
+  const decreaseTopIndex = () => {
+    if (topData) {
+      if (leaving) return;
+      toggleLeaving();
+      setIndexBack(true);
+      const totalMovies = topData.results.length;
+      const maxIndex = Math.ceil(totalMovies / offset) - 1;
+      setTopIndex((prev) => (prev === 0 ? maxIndex : prev - 1));
+    }
+  };
+
   const toggleLeaving = () => {
     setLeaving((PREV) => !PREV);
   };
@@ -281,6 +352,10 @@ function Home() {
     history.push(`/popularmovies/${popmovieId}`);
   };
 
+  const onTopBoxClicked = (topMovieId: number) => {
+    history.push(`/topmovies/${topMovieId}`);
+  };
+
   const onOverlayClick = () => {
     history.push("/");
   };
@@ -293,7 +368,11 @@ function Home() {
     popularData?.results.find(
       (popularMovie) => +bigPopMovieMatch.params.popmovieId === popularMovie.id
     );
-  console.log(clickedMovie, clickedPopularMovie);
+  const clickedTopMovie =
+    bigTopMovieMatch?.params.topMovieId &&
+    topData?.results.find(
+      (topMovie) => topMovie.id === +bigTopMovieMatch?.params.topMovieId
+    );
 
   return (
     <Wrapper>
@@ -353,9 +432,9 @@ function Home() {
             <IndexPrevButton onClick={decreasePopularIndex}>
               <FontAwesomeIcon icon={faAnglesLeft} />
             </IndexPrevButton>
-
             <AnimatePresence initial={false} onExitComplete={toggleLeaving}>
               <Row
+                custom={indexBack}
                 variants={rowVars}
                 initial="start"
                 animate={{ x: 0 }}
@@ -387,6 +466,46 @@ function Home() {
               </Row>
             </AnimatePresence>
           </PopularSlider>
+          <TopSlider>
+            <BoxName>Top Rated Movies</BoxName>
+            <IndexNextButton onClick={increaseTopIndex}>
+              <FontAwesomeIcon icon={faAnglesRight} />
+            </IndexNextButton>
+            <IndexPrevButton onClick={decreaseTopIndex}>
+              <FontAwesomeIcon icon={faAnglesLeft} />
+            </IndexPrevButton>
+
+            <AnimatePresence initial={false} onExitComplete={toggleLeaving}>
+              <Row
+                custom={indexBack}
+                variants={rowVars}
+                initial="start"
+                animate={{ x: 0 }}
+                exit="exit"
+                transition={{ type: "tween", duration: 1 }}
+                key={topIndex}
+              >
+                {topData?.results
+                  .slice(offset * topIndex, offset * topIndex + offset)
+                  .map((topMovie) => (
+                    <Box
+                      layoutId={topMovie.id + "top"}
+                      key={topMovie.id}
+                      variants={boxVars}
+                      initial="normal"
+                      onClick={() => onTopBoxClicked(topMovie.id)}
+                      whileHover="hover"
+                      transition={{ type: "tween" }}
+                      bgphoto={makeImagePath(topMovie.backdrop_path, "w500")}
+                    >
+                      <BoxInfo variants={infoVars}>
+                        <h4>{topMovie.title}</h4>
+                      </BoxInfo>
+                    </Box>
+                  ))}
+              </Row>
+            </AnimatePresence>
+          </TopSlider>
           <AnimatePresence>
             {bigMovieMatch ? (
               <>
@@ -403,14 +522,28 @@ function Home() {
                     <>
                       <BigCover
                         style={{
-                          backgroundImage: `linear-gradient(to top,rgba(0,0,0,0.7),transparent),url(${makeImagePath(
+                          backgroundImage: `linear-gradient(to top,rgba(0,0,0,1),transparent),url(${makeImagePath(
                             clickedMovie.backdrop_path,
                             "w500"
                           )})`,
                         }}
                       />
-                      <BigTitle>{clickedMovie.title}</BigTitle>
+                      <BigTitle>
+                        {clickedMovie.title.length < 30
+                          ? clickedMovie.title
+                          : clickedMovie.title.slice(0, 26) + "..."}
+                      </BigTitle>
                       <BigOVerview>{clickedMovie.overview}</BigOVerview>
+                      <MoreInfo>
+                        <span>
+                          ⭐ : {clickedMovie.vote_average} (
+                          {clickedMovie.vote_count})
+                        </span>
+                        <span>
+                          Popularity : {Math.floor(clickedMovie.popularity)}
+                        </span>
+                        <span>Release Date : {clickedMovie.release_date}</span>
+                      </MoreInfo>
                     </>
                   )}
                 </BigMovieInfo>
@@ -436,8 +569,68 @@ function Home() {
                           )})`,
                         }}
                       />
-                      <BigTitle>{clickedPopularMovie.title}</BigTitle>
+                      <BigTitle>
+                        {clickedPopularMovie.title.length < 30
+                          ? clickedPopularMovie.title
+                          : clickedPopularMovie.title.slice(0, 26) + "..."}
+                      </BigTitle>
                       <BigOVerview>{clickedPopularMovie.overview}</BigOVerview>
+                      <MoreInfo>
+                        <span>
+                          ⭐ : {clickedPopularMovie.vote_average} (
+                          {clickedPopularMovie.vote_count})
+                        </span>
+                        <span>
+                          Popularity :
+                          {Math.floor(clickedPopularMovie.popularity)}
+                        </span>
+                        <span>
+                          Release Date : {clickedPopularMovie.release_date}
+                        </span>
+                      </MoreInfo>
+                    </>
+                  )}
+                </BigMovieInfo>
+              </>
+            ) : bigTopMovieMatch ? (
+              <>
+                <Overlay
+                  onClick={onOverlayClick}
+                  animate={{ opacity: 1, transition: { duration: 0.5 } }}
+                  exit={{ opacity: 0, transition: { duration: 0.5 } }}
+                />
+                <BigMovieInfo
+                  layoutId={bigTopMovieMatch.params.topMovieId + "top"}
+                  ypoint={scrollY.get()}
+                >
+                  {clickedTopMovie && (
+                    <>
+                      <BigCover
+                        style={{
+                          backgroundImage: `linear-gradient(to top,rgba(0,0,0,1),transparent),url(${makeImagePath(
+                            clickedTopMovie.backdrop_path,
+                            "w500"
+                          )})`,
+                        }}
+                      />
+                      <BigTitle>
+                        {clickedTopMovie.title.length < 30
+                          ? clickedTopMovie.title
+                          : clickedTopMovie.title.slice(0, 26) + "..."}
+                      </BigTitle>
+                      <BigOVerview>{clickedTopMovie.overview}</BigOVerview>
+                      <MoreInfo>
+                        <span>
+                          ⭐ : {clickedTopMovie.vote_average} (
+                          {clickedTopMovie.vote_count})
+                        </span>
+                        <span>
+                          Popularity :{Math.floor(clickedTopMovie.popularity)}
+                        </span>
+                        <span>
+                          Release Date : {clickedTopMovie.release_date}
+                        </span>
+                      </MoreInfo>
                     </>
                   )}
                 </BigMovieInfo>

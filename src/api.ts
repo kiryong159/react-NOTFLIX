@@ -7,6 +7,10 @@ interface IMovie {
   poster_path: string;
   title: string;
   overview: string;
+  popularity: number;
+  release_date: string;
+  vote_average: number;
+  vote_count: number;
 }
 
 export interface IGetMoviesResult {
@@ -33,5 +37,25 @@ export interface IGetPopularMovies {
 export function getpopularMovies() {
   return fetch(
     `${BASE_PATH}/movie/popular?api_key=${API_KEY}&language=en-US&page=1`
+  ).then((response) => response.json());
+}
+
+export interface IGetTopMovies {
+  results: IMovie[];
+}
+
+export function getTopMovies() {
+  return fetch(
+    `${BASE_PATH}/movie/top_rated?api_key=${API_KEY}&language=en-US&page=1`
+  ).then((response) => response.json());
+}
+
+export interface IGetSearch {
+  results: IMovie[];
+}
+
+export function getSearch(KeyWord: string) {
+  return fetch(
+    `${BASE_PATH}/search/movie?api_key=${API_KEY}&language=en-US&query=${KeyWord}&page=1&include_adult=false`
   ).then((response) => response.json());
 }

@@ -138,7 +138,6 @@ body{
   font-family: "Nunito", sans-serif;
   line-height: 1.2;
   color:${(props) => props.theme.white.darker};
-  height:100vh;
   background-color:aliceblue;
 }
 a {
