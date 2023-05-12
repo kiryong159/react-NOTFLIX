@@ -9,6 +9,7 @@ const Wrapper = styled.div`
   height: 100vh;
   background: black;
   overflow-x: hidden;
+
   ::-webkit-scrollbar {
     display: none; /*크롬 엣지 */
   }
@@ -39,6 +40,7 @@ const SmallBox = styled(motion.div)<{ bgPhoto: string }>`
   background-size: cover;
   background-position: center center;
   border-radius: 10px;
+  cursor: pointer;
 `;
 
 const NoBgPhoto = styled.span`
@@ -78,7 +80,7 @@ const SmallBoxTitle = styled(motion.div)`
   }
 `;
 
-const SearchInfoBox = styled.div``;
+const SearchInfoBox = styled(motion.div)``;
 const Overlay = styled(motion.div)`
   position: fixed;
   top: 0;
@@ -108,10 +110,39 @@ const SearchInfo = styled(motion.div)<{ ypoint: number }>`
 const SearchInfoImg = styled.div<{ bgPhoto: string }>`
   background-image: linear-gradient(to top, rgba(0, 0, 0, 1), transparent),
     url(${(props) => props.bgPhoto});
-  background-size: cover;
   width: 100%;
-  height: 400px;
+  background-size: cover;
   background-position: center center;
+  height: 400px;
+`;
+
+const MoreInfo = styled.div`
+  display: flex;
+  position: relative;
+  top: -40px;
+  flex-direction: column;
+  margin-left: 15px;
+  span {
+    font-size: 20px;
+    font-weight: bold;
+    padding: 10px;
+  }
+`;
+
+const SearchInfoTitle = styled.h2`
+  color: ${(props) => props.theme.white.lighter};
+  font-size: 50px;
+  font-weight: bold;
+  position: relative;
+  padding: 10px;
+  top: -100px;
+`;
+const SearchInfoOverview = styled.p`
+  position: relative;
+  padding: 20px;
+  top: -70px;
+  font-size: 20px;
+  color: ${(props) => props.theme.white.lighter};
 `;
 
 function Search() {
@@ -147,6 +178,7 @@ function Search() {
           <AnimatePresence>
             {searchData?.results.map((search) => (
               <SmallBox
+                layoutId={search.id + ""}
                 variants={smallBoxVars}
                 whileHover="hover"
                 initial="start"
@@ -154,9 +186,9 @@ function Search() {
                 key={search.id}
                 onClick={() => onBoxClick(search.id)}
                 bgPhoto={
-                  search.poster_path
-                    ? makeImagePath(search.poster_path, "w200")
-                    : makeImagePath(search.backdrop_path, "w200")
+                  search.backdrop_path
+                    ? makeImagePath(search.backdrop_path, "w200")
+                    : makeImagePath(search.poster_path, "w200")
                 }
               >
                 <NoBgPhoto>
@@ -177,10 +209,37 @@ function Search() {
           {SearchMovieData ? (
             <SearchInfoBox>
               <Overlay onClick={onOverRayClick} />
-              <SearchInfo ypoint={scrollY.get()}>
+              <SearchInfo
+                layoutId={SearchMovieData.id + ""}
+                ypoint={scrollY.get()}
+              >
                 <SearchInfoImg
-                  bgPhoto={makeImagePath(SearchMovieData.poster_path)}
+                  bgPhoto={
+                    SearchMovieData.backdrop_path
+                      ? makeImagePath(SearchMovieData.backdrop_path, "w500")
+                      : makeImagePath(SearchMovieData.poster_path, "w500")
+                  }
                 />
+                <SearchInfoTitle>
+                  {SearchMovieData.title.length < 30
+                    ? SearchMovieData.title
+                    : SearchMovieData.title.slice(0, 26) + "..."}
+                </SearchInfoTitle>
+                <SearchInfoOverview>
+                  {SearchMovieData.overview === ""
+                    ? "Overview is not registered."
+                    : SearchMovieData.overview}
+                </SearchInfoOverview>
+                <MoreInfo>
+                  <span>
+                    ⭐ : {Math.round(SearchMovieData.vote_average * 10) / 10} (
+                    {SearchMovieData.vote_count})
+                  </span>
+                  <span>
+                    Popularity : {Math.floor(SearchMovieData.popularity)}
+                  </span>
+                  <span>Release Date : {SearchMovieData.release_date}</span>
+                </MoreInfo>
               </SearchInfo>
             </SearchInfoBox>
           ) : null}
