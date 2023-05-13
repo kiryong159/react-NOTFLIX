@@ -1,5 +1,6 @@
 const API_KEY = "31581fb70bfe123b6cab23244fcf0d8a";
 const BASE_PATH = "https://api.themoviedb.org/3";
+const BASE_TV_PATH = "https://api.themoviedb.org/3";
 
 interface IMovie {
   id: number;
@@ -59,3 +60,35 @@ export function getSearch(KeyWord: string) {
     `${BASE_PATH}/search/movie?api_key=${API_KEY}&language=en-US&query=${KeyWord}&page=1&include_adult=false`
   ).then((response) => response.json());
 }
+
+interface ITv {
+  id: number;
+  backdrop_path: string;
+  poster_path: string;
+  name: string;
+  overview: string;
+  popularity: number;
+  first_air_date: string;
+  vote_average: number;
+  vote_count: number;
+}
+
+export interface IGetTodayTv {
+  results: ITv[];
+}
+
+export const getTodayTv = () => {
+  return fetch(
+    `${BASE_TV_PATH}//tv/airing_today?api_key=${API_KEY}&language=en-US&page=1`
+  ).then((response) => response.json());
+};
+
+export interface IGetPopularTv {
+  results: ITv[];
+}
+
+export const getPopularTv = () => {
+  return fetch(
+    `${BASE_TV_PATH}//tv/popular?api_key=${API_KEY}&language=en-US&page=1`
+  ).then((response) => response.json());
+};

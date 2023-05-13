@@ -7,7 +7,7 @@ import { makeImagePath } from "../utils";
 
 const Wrapper = styled.div`
   height: 100vh;
-  background: black;
+  background: ${(props) => props.theme.black.darker};
   overflow-x: hidden;
 
   ::-webkit-scrollbar {
@@ -149,9 +149,7 @@ function Search() {
   const history = useHistory();
   const location = useLocation();
   const keyword = new URLSearchParams(location.search).get("keyword");
-  /*   const searchMatch = useRouteMatch<{ keyword: string }>(
-    `/search?keyword=:keyword`
-  ); */
+
   const { data: searchData } = useQuery<IGetSearch>(
     ["search", `${keyword}`],
     () => getSearch(keyword + "")
@@ -160,10 +158,10 @@ function Search() {
     history.push(`/search/${searchId}?keyword=${keyword}`);
   };
   const onOverRayClick = () => {
-    history.goBack();
+    history.push(`/search/?keyword=${keyword}`);
   };
   const searchMatch = useRouteMatch<{ searchId: string }>(`/search/:searchId`);
-  console.log(searchMatch);
+  /* search뒤의 ?부분은 안적어도 되는듯? */
   const SearchMovieData =
     searchMatch &&
     searchData?.results.find(
