@@ -73,22 +73,24 @@ interface ITv {
   vote_count: number;
 }
 
-export interface IGetTodayTv {
+export interface IGetTv {
   results: ITv[];
 }
 
 export const getTodayTv = () => {
   return fetch(
-    `${BASE_TV_PATH}//tv/airing_today?api_key=${API_KEY}&language=en-US&page=1`
+    `${BASE_TV_PATH}/tv/airing_today?api_key=${API_KEY}&language=en-US&page=1`
   ).then((response) => response.json());
 };
 
-export interface IGetPopularTv {
-  results: ITv[];
-}
-
 export const getPopularTv = () => {
   return fetch(
-    `${BASE_TV_PATH}//tv/popular?api_key=${API_KEY}&language=en-US&page=1`
+    `${BASE_TV_PATH}/tv/popular?api_key=${API_KEY}&language=en-US&page=1`
+  ).then((response) => response.json());
+};
+
+export const getTopTv = () => {
+  return fetch(
+    `${BASE_TV_PATH}/tv/top_rated?api_key=${API_KEY}&language=en-US&page=1`
   ).then((response) => response.json());
 };

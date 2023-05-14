@@ -5,7 +5,7 @@ import { AnimatePresence, motion, useScroll } from "framer-motion";
 import { useState } from "react";
 import { useHistory, useRouteMatch } from "react-router-dom";
 import styled from "styled-components";
-import { getPopularTv, getTodayTv, IGetPopularTv, IGetTodayTv } from "../api";
+import { getPopularTv, getTodayTv, getTopTv, IGetTv } from "../api";
 import { makeImagePath } from "../utils";
 import useWindowDimensions from "../windowDimension";
 
@@ -43,6 +43,14 @@ const BannerOverview = styled.p`
 `;
 
 const Slider = styled.div`
+  position: relative;
+  top: 150px;
+`;
+const TodaySlider = styled.div`
+  position: relative;
+  top: +450px;
+`;
+const TopSlider = styled.div`
   position: relative;
   top: -150px;
 `;
@@ -130,26 +138,70 @@ const BigTvInfo = styled(motion.div)<{ ypoint: number }>`
   top: ${(props) => props.ypoint + 120}px;
   border-radius: 15px;
   background-color: ${(props) => props.theme.black.lighter};
+  z-index: 5;
+`;
+
+const BigTvInfoImg = styled.div<{ bgphoto: string }>`
+  background-image: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent),
+    url(${(props) => props.bgphoto});
+  background-position: center center;
+  background-size: cover;
+  display: flex;
+  height: 50%;
+  width: 100%;
+  border-top-left-radius: 15px;
+  border-top-right-radius: 15px;
+`;
+const BigTvInfoTitle = styled.h1`
+  font-size: 50px;
+  font-weight: bold;
+  position: relative;
+  top: -100px;
+  left: 20px;
+`;
+const BigTvInfoOverview = styled.div`
+  position: relative;
+  padding: 20px;
+  top: -70px;
+  color: ${(props) => props.theme.white.lighter};
+`;
+
+const MoreInfo = styled.div`
+  display: flex;
+  position: relative;
+  top: -40px;
+  flex-direction: column;
+  margin-left: 15px;
+  span {
+    font-size: 20px;
+    font-weight: bold;
+    padding: 10px;
+  }
 `;
 
 function Tv() {
   const hisetory = useHistory();
   const { scrollY } = useScroll();
   const [index, setIndex] = useState(0);
+  const [todayIndex, setTodayIndex] = useState(0);
+  const [topIndex, setTopIndex] = useState(0);
   const [indexincreasing, setIndexincreasing] = useState(false);
-  const { data: tvTodayData, isLoading } = useQuery<IGetTodayTv>(
-    ["Tv", "Today"],
-    getTodayTv
-  );
-  const { data: tvPopularData } = useQuery<IGetPopularTv>(
+  const [indexBack, setIndexBack] = useState(false);
+  const { data: tvTodayData } = useQuery<IGetTv>(["Tv", "Today"], getTodayTv);
+  const { data: tvPopularData } = useQuery<IGetTv>(
     ["Tv", "Popular"],
     getPopularTv
+  );
+  const { data: tvTopData, isLoading } = useQuery<IGetTv>(
+    ["Tv", "Top"],
+    getTopTv
   );
 
   const increaseIndex = () => {
     if (tvPopularData) {
       if (indexincreasing) return;
       toggleState();
+      setIndexBack(false);
       const indexLength = tvPopularData.results.length - 1;
       const maxIndex = Math.ceil(indexLength / offset - 1);
       setIndex((prev) => (maxIndex === prev ? 0 : prev + 1));
@@ -159,9 +211,52 @@ function Tv() {
     if (tvPopularData) {
       if (indexincreasing) return;
       toggleState();
+      setIndexBack(true);
       const indexLength = tvPopularData.results.length - 1;
       const maxIndex = Math.ceil(indexLength / offset - 1);
       setIndex((prev) => (0 === prev ? maxIndex : prev - 1));
+    }
+  };
+
+  const increaseTodayIndex = () => {
+    if (tvTodayData) {
+      if (indexincreasing) return;
+      toggleState();
+      setIndexBack(false);
+      const indexLength = tvTodayData.results.length;
+      const maxIndex = Math.ceil(indexLength / offset - 1);
+      setTodayIndex((prev) => (maxIndex === prev ? 0 : prev + 1));
+    }
+  };
+  const decreaseTodayIndex = () => {
+    if (tvTodayData) {
+      if (indexincreasing) return;
+      toggleState();
+      setIndexBack(true);
+      const indexLength = tvTodayData.results.length;
+      const maxIndex = Math.ceil(indexLength / offset - 1);
+      setTodayIndex((prev) => (0 === prev ? maxIndex : prev - 1));
+    }
+  };
+
+  const increaseTopIndex = () => {
+    if (tvTopData) {
+      if (indexincreasing) return;
+      toggleState();
+      setIndexBack(false);
+      const indexLength = tvTopData.results.length;
+      const maxIndex = Math.ceil(indexLength / offset - 1);
+      setTopIndex((prev) => (maxIndex === prev ? 0 : prev + 1));
+    }
+  };
+  const decreaseTopIndex = () => {
+    if (tvTopData) {
+      if (indexincreasing) return;
+      toggleState();
+      setIndexBack(true);
+      const indexLength = tvTopData.results.length;
+      const maxIndex = Math.ceil(indexLength / offset - 1);
+      setTopIndex((prev) => (0 === prev ? maxIndex : prev - 1));
     }
   };
 
@@ -172,14 +267,17 @@ function Tv() {
   const width = useWindowDimensions();
   const offset = 6;
   const rowVars = {
-    hidden: {
-      x: width + 10,
+    hidden: (indexBack: boolean) => {
+      return { x: indexBack ? -width - 10 : width + 10 };
     },
     visible: {
       x: 0,
     },
-    exit: {
-      x: -width - 10,
+    exit: (indexBack: boolean) => {
+      return {
+        x: indexBack ? width + 10 : -width - 10,
+        opacity: indexBack ? 0 : 1,
+      };
     },
   };
   const boxVars = {
@@ -198,12 +296,34 @@ function Tv() {
   };
 
   const onTvBoxClicked = (tvId: number) => {
-    hisetory.push(`/tv/${tvId}`);
+    hisetory.push(`/tv/popular/${tvId}`);
   };
-  const popularTvMatch = useRouteMatch<{ tvId: string }>(`/tv/:tvId`);
+  const onTopTvBoxClicked = (topTvId: number) => {
+    hisetory.push(`/tv/top/${topTvId}`);
+  };
+
+  const onTodayTvBoxClicked = (todayTvId: number) => {
+    hisetory.push(`/tv/today/${todayTvId}`);
+  };
+
+  const popularTvMatch = useRouteMatch<{ tvId: string }>(`/tv/popular/:tvId`);
+  const todayTvMatch = useRouteMatch<{ todayTvId: string }>(
+    `/tv/today/:todayTvId`
+  );
+  const topTvMatch = useRouteMatch<{ topTvId: string }>(`/tv/top/:topTvId`);
   const findPopularTvInfo =
     popularTvMatch?.params.tvId &&
     tvPopularData?.results.find((tv) => tv.id === +popularTvMatch?.params.tvId);
+  const findTodayTvInfo =
+    todayTvMatch?.params.todayTvId &&
+    tvTodayData?.results.find(
+      (todayTv) => +todayTvMatch?.params.todayTvId === todayTv.id
+    );
+  const findTopTvInfo =
+    topTvMatch?.params.topTvId &&
+    tvTopData?.results.find(
+      (topTv) => topTv.id === +topTvMatch?.params.topTvId
+    );
 
   return (
     <Wrapper>
@@ -213,18 +333,61 @@ function Tv() {
         <>
           <MainBanner
             bgphoto={
-              tvPopularData?.results[0].backdrop_path
-                ? makeImagePath(tvPopularData?.results[0].backdrop_path + "")
-                : makeImagePath(tvPopularData?.results[0].poster_path + "")
+              tvTopData?.results[0].backdrop_path
+                ? makeImagePath(tvTopData?.results[0].backdrop_path + "")
+                : makeImagePath(tvTopData?.results[0].poster_path + "")
             }
           >
-            <BannerTitle>{tvPopularData?.results[0].name}</BannerTitle>
+            <BannerTitle>{tvTopData?.results[0].name}</BannerTitle>
             <BannerOverview>
-              {tvPopularData?.results[0].overview === ""
+              {tvTopData?.results[0].overview === ""
                 ? "Overview is not registered."
-                : tvPopularData?.results[0].overview}
+                : tvTopData?.results[0].overview}
             </BannerOverview>
           </MainBanner>
+          <TopSlider>
+            <SliderName>TopRated Tv show</SliderName>
+            <IndexNextButton onClick={increaseTopIndex}>
+              <FontAwesomeIcon icon={faAnglesRight} />
+            </IndexNextButton>
+            <IndexPrevButton onClick={decreaseTopIndex}>
+              <FontAwesomeIcon icon={faAnglesLeft} />
+            </IndexPrevButton>
+            <AnimatePresence initial={false} onExitComplete={toggleState}>
+              <Row
+                custom={indexBack}
+                variants={rowVars}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+                transition={{ type: "tween", duration: 1 }}
+                key={topIndex}
+              >
+                {tvTopData?.results
+                  .slice(1)
+                  .slice(topIndex * offset, topIndex * offset + offset)
+                  .map((tvTopData) => (
+                    <Box
+                      key={tvTopData.id}
+                      layoutId={tvTopData.id + "Top"}
+                      variants={boxVars}
+                      bgphoto={
+                        tvTopData.backdrop_path
+                          ? makeImagePath(tvTopData.backdrop_path + "")
+                          : makeImagePath(tvTopData.poster_path + "")
+                      }
+                      onClick={() => onTopTvBoxClicked(tvTopData.id)}
+                      initial="normal"
+                      whileHover="hover"
+                    >
+                      <BoxTitle variants={boxTitleVars}>
+                        <h4>{tvTopData.name}</h4>
+                      </BoxTitle>
+                    </Box>
+                  ))}
+              </Row>
+            </AnimatePresence>
+          </TopSlider>
           <Slider>
             <SliderName>Popular Tv show</SliderName>
             <IndexNextButton onClick={increaseIndex}>
@@ -235,6 +398,7 @@ function Tv() {
             </IndexPrevButton>
             <AnimatePresence initial={false} onExitComplete={toggleState}>
               <Row
+                custom={indexBack}
                 variants={rowVars}
                 initial="hidden"
                 animate="visible"
@@ -248,6 +412,7 @@ function Tv() {
                   .map((tvPopData) => (
                     <Box
                       key={tvPopData.id}
+                      layoutId={tvPopData.id + "Popular"}
                       variants={boxVars}
                       bgphoto={
                         tvPopData.backdrop_path
@@ -266,11 +431,167 @@ function Tv() {
               </Row>
             </AnimatePresence>
           </Slider>
+          <TodaySlider>
+            <SliderName>Today Tv show</SliderName>
+            <IndexNextButton onClick={increaseTodayIndex}>
+              <FontAwesomeIcon icon={faAnglesRight} />
+            </IndexNextButton>
+            <IndexPrevButton onClick={decreaseTodayIndex}>
+              <FontAwesomeIcon icon={faAnglesLeft} />
+            </IndexPrevButton>
+            <AnimatePresence initial={false} onExitComplete={toggleState}>
+              <Row
+                custom={indexBack}
+                variants={rowVars}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+                transition={{ type: "tween", duration: 1 }}
+                key={todayIndex}
+              >
+                {tvTodayData?.results
+                  .slice(1)
+                  .slice(todayIndex * offset, todayIndex * offset + offset)
+                  .map((tvTodayData) => (
+                    <Box
+                      key={tvTodayData.id}
+                      layoutId={tvTodayData.id + "Today"}
+                      variants={boxVars}
+                      bgphoto={
+                        tvTodayData.backdrop_path
+                          ? makeImagePath(tvTodayData.backdrop_path + "")
+                          : makeImagePath(tvTodayData.poster_path + "")
+                      }
+                      onClick={() => onTodayTvBoxClicked(tvTodayData.id)}
+                      initial="normal"
+                      whileHover="hover"
+                    >
+                      <BoxTitle variants={boxTitleVars}>
+                        <h4>{tvTodayData.name}</h4>
+                      </BoxTitle>
+                    </Box>
+                  ))}
+              </Row>
+            </AnimatePresence>
+          </TodaySlider>
           <AnimatePresence>
             {findPopularTvInfo ? (
               <>
-                <Overlay onClick={onOverlayClick} />
-                <BigTvInfo ypoint={scrollY.get()}></BigTvInfo>
+                <Overlay
+                  onClick={onOverlayClick}
+                  animate={{ opacity: 1, transition: { duration: 0.5 } }}
+                  exit={{ opacity: 0, transition: { duration: 0.5 } }}
+                />
+                <BigTvInfo
+                  layoutId={findPopularTvInfo.id + "Popular"}
+                  ypoint={scrollY.get()}
+                >
+                  <BigTvInfoImg
+                    bgphoto={
+                      findPopularTvInfo.backdrop_path
+                        ? makeImagePath(findPopularTvInfo.backdrop_path, "w500")
+                        : makeImagePath(findPopularTvInfo.poster_path, "w500")
+                    }
+                  />
+                  <BigTvInfoTitle>
+                    {findPopularTvInfo.name.length < 30
+                      ? findPopularTvInfo.name
+                      : findPopularTvInfo.name.slice(0, 26) + "..."}
+                  </BigTvInfoTitle>
+                  <BigTvInfoOverview>
+                    {findPopularTvInfo.overview}
+                  </BigTvInfoOverview>
+                  <MoreInfo>
+                    <span>
+                      ⭐ : {findPopularTvInfo.vote_average} (
+                      {findPopularTvInfo.vote_count})
+                    </span>
+                    <span>
+                      Popularity :{Math.floor(findPopularTvInfo.popularity)}
+                    </span>
+                    <span>
+                      First Air Date : {findPopularTvInfo.first_air_date}
+                    </span>
+                  </MoreInfo>
+                </BigTvInfo>
+              </>
+            ) : findTodayTvInfo ? (
+              <>
+                <Overlay
+                  onClick={onOverlayClick}
+                  animate={{ opacity: 1, transition: { duration: 0.5 } }}
+                  exit={{ opacity: 0, transition: { duration: 0.5 } }}
+                />
+                <BigTvInfo
+                  layoutId={findTodayTvInfo.id + "Today"}
+                  ypoint={scrollY.get()}
+                >
+                  <BigTvInfoImg
+                    bgphoto={
+                      findTodayTvInfo.backdrop_path
+                        ? makeImagePath(findTodayTvInfo.backdrop_path, "w500")
+                        : makeImagePath(findTodayTvInfo.poster_path, "w500")
+                    }
+                  />
+                  <BigTvInfoTitle>
+                    {findTodayTvInfo.name.length < 30
+                      ? findTodayTvInfo.name
+                      : findTodayTvInfo.name.slice(0, 26) + "..."}
+                  </BigTvInfoTitle>
+                  <BigTvInfoOverview>
+                    {findTodayTvInfo.overview}
+                  </BigTvInfoOverview>
+                  <MoreInfo>
+                    <span>
+                      ⭐ : {findTodayTvInfo.vote_average} (
+                      {findTodayTvInfo.vote_count})
+                    </span>
+                    <span>
+                      Popularity :{Math.floor(findTodayTvInfo.popularity)}
+                    </span>
+                    <span>
+                      First Air Date : {findTodayTvInfo.first_air_date}
+                    </span>
+                  </MoreInfo>
+                </BigTvInfo>
+              </>
+            ) : findTopTvInfo ? (
+              <>
+                <Overlay
+                  onClick={onOverlayClick}
+                  animate={{ opacity: 1, transition: { duration: 0.5 } }}
+                  exit={{ opacity: 0, transition: { duration: 0.5 } }}
+                />
+                <BigTvInfo
+                  layoutId={findTopTvInfo.id + "Top"}
+                  ypoint={scrollY.get()}
+                >
+                  <BigTvInfoImg
+                    bgphoto={
+                      findTopTvInfo.backdrop_path
+                        ? makeImagePath(findTopTvInfo.backdrop_path, "w500")
+                        : makeImagePath(findTopTvInfo.poster_path, "w500")
+                    }
+                  />
+                  <BigTvInfoTitle>
+                    {findTopTvInfo.name.length < 30
+                      ? findTopTvInfo.name
+                      : findTopTvInfo.name.slice(0, 26) + "..."}
+                  </BigTvInfoTitle>
+                  <BigTvInfoOverview>
+                    {findTopTvInfo.overview}
+                  </BigTvInfoOverview>
+                  <MoreInfo>
+                    <span>
+                      ⭐ : {findTopTvInfo.vote_average} (
+                      {findTopTvInfo.vote_count})
+                    </span>
+                    <span>
+                      Popularity :{Math.floor(findTopTvInfo.popularity)}
+                    </span>
+                    <span>First Air Date : {findTopTvInfo.first_air_date}</span>
+                  </MoreInfo>
+                </BigTvInfo>
               </>
             ) : null}
           </AnimatePresence>

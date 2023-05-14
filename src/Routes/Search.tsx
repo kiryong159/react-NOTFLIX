@@ -9,7 +9,6 @@ const Wrapper = styled.div`
   height: 100vh;
   background: ${(props) => props.theme.black.darker};
   overflow-x: hidden;
-
   ::-webkit-scrollbar {
     display: none; /*크롬 엣지 */
   }
@@ -43,7 +42,7 @@ const SmallBox = styled(motion.div)<{ bgPhoto: string }>`
   cursor: pointer;
 `;
 
-const NoBgPhoto = styled.span`
+/* const NoBgPhoto = styled.span`
   display: flex;
   justify-content: center;
   align-items: center;
@@ -54,7 +53,7 @@ const NoBgPhoto = styled.span`
   position: relative;
   top: 30px;
 `;
-
+ */
 const smallBoxVars = {
   start: { scale: 1.0 },
   hover: { scale: 1.2, y: -70, transition: { delay: 0.5, duration: 0.5 } },
@@ -186,16 +185,18 @@ function Search() {
                 bgPhoto={
                   search.backdrop_path
                     ? makeImagePath(search.backdrop_path, "w200")
-                    : makeImagePath(search.poster_path, "w200")
+                    : search.poster_path
+                    ? makeImagePath(search.poster_path, "w200")
+                    : "https://www.shoshinsha-design.com/wp-content/uploads/2020/05/noimage-760x460.png"
                 }
               >
-                <NoBgPhoto>
+                {/* <NoBgPhoto>
                   {search.poster_path
                     ? null
                     : search.backdrop_path
                     ? null
                     : search.title}
-                </NoBgPhoto>
+                </NoBgPhoto> */}
                 <SmallBoxTitle variants={SmallBoxTitleVars}>
                   <h4>{search.title}</h4>
                 </SmallBoxTitle>
